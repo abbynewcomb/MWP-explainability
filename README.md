@@ -72,7 +72,7 @@ Once you have a trained model in the `models/` directory test like this:
 sh run.sh test cv_asdiv-a
 ```
 
-# Transformer Seq2Seq
+## Transformer Seq2Seq
 
 I set this up to be the same as the "Attention Is All You Need" paper. You'll probably want to adjust the params in `run.sh`.
 
@@ -96,7 +96,7 @@ Once you have a trained model in the `models/` directory test like this:
 sh run.sh test cv_asdiv-a
 ```
 
-# GTS
+## GTS
 
 First move to the GTS directory:
 
@@ -118,7 +118,7 @@ Once you have a trained model in the `models/` directory test like this:
 sh run.sh test cv_asdiv-a
 ```
 
-# Graph2Tree
+## Graph2Tree
 
 First move to the Graph2Tree directory:
 
@@ -140,7 +140,7 @@ Once you have a trained model in the `models/` directory test like this:
 sh run.sh test cv_asdiv-a
 ```
 
-# Constrained
+## Constrained
 
 First move to the Constrained directory:
 
