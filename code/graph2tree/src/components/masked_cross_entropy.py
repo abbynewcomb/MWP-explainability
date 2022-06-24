@@ -10,7 +10,7 @@ def sequence_mask(sequence_length, max_len=None):
     seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
     if sequence_length.is_cuda:
         seq_range_expand = seq_range_expand.cuda()
-    seq_length_expand = (sequence_length.unsqueeze(1).expand_as(seq_range_expand))
+    seq_length_expand = sequence_length.unsqueeze(1).expand_as(seq_range_expand)
     return seq_range_expand < seq_length_expand
 
 

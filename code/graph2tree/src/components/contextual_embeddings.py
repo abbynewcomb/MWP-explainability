@@ -1,113 +1,150 @@
 import torch.nn as nn
 import torch
 from transformers import BertModel, BertTokenizer, RobertaModel, RobertaTokenizer
-import pdb
+
 
 class BertEncoder(nn.Module):
-	def __init__(self, bert_model = 'bert-base-uncased',device = 'cuda:0 ', freeze_bert = False):
-		super(BertEncoder, self).__init__()
-		self.bert_layer = BertModel.from_pretrained(bert_model)
-		self.bert_tokenizer = BertTokenizer.from_pretrained(bert_model)
-		self.device = device
-		
-		if freeze_bert:
-			for p in self.bert_layer.parameters():
-				p.requires_grad = False
-		
-	def bertify_input(self, sentences):
-		'''
-		Preprocess the input sentences using bert tokenizer and converts them to a torch tensor containing token ids
+    def __init__(
+        self, bert_model="bert-base-uncased", device="cuda:0 ", freeze_bert=False
+    ):
+        super(BertEncoder, self).__init__()
+        self.bert_layer = BertModel.from_pretrained(bert_model)
+        self.bert_tokenizer = BertTokenizer.from_pretrained(bert_model)
+        self.device = device
 
-		'''
-		#Tokenize the input sentences for feeding into BERT
-		# pdb.set_trace()
-		all_tokens  = [['[CLS]'] + self.bert_tokenizer.tokenize(sentence) + ['[SEP]'] for sentence in sentences]
+        if freeze_bert:
+            for p in self.bert_layer.parameters():
+                p.requires_grad = False
 
-		index_retrieve = []
-		for sent in all_tokens:
-			cur_ls = []
-			for j in range(1, len(sent)):
-				if sent[j][0] == '#':
-					continue
-				else:
-					cur_ls.append(j)
-			index_retrieve.append(cur_ls)
-		
-		#Pad all the sentences to a maximum length
-		input_lengths = [len(tokens) for tokens in all_tokens]
-		max_length    = max(input_lengths)
-		padded_tokens = [tokens + ['[PAD]' for _ in range(max_length - len(tokens))] for tokens in all_tokens]
+    def bertify_input(self, sentences):
+        """
+        Preprocess the input sentences using bert tokenizer and converts them to a torch tensor containing token ids
 
-		#Convert tokens to token ids
-		token_ids = torch.tensor([self.bert_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
+        """
+        # Tokenize the input sentences for feeding into BERT
+        # pdb.set_trace()
+        all_tokens = [
+            ["[CLS]"] + self.bert_tokenizer.tokenize(sentence) + ["[SEP]"]
+            for sentence in sentences
+        ]
 
-		#Obtain attention masks
-		pad_token = self.bert_tokenizer.convert_tokens_to_ids('[PAD]')
-		attn_masks = (token_ids != pad_token).long()
+        index_retrieve = []
+        for sent in all_tokens:
+            cur_ls = []
+            for j in range(1, len(sent)):
+                if sent[j][0] == "#":
+                    continue
+                else:
+                    cur_ls.append(j)
+            index_retrieve.append(cur_ls)
 
-		return token_ids, attn_masks, input_lengths, index_retrieve
+        # Pad all the sentences to a maximum length
+        input_lengths = [len(tokens) for tokens in all_tokens]
+        max_length = max(input_lengths)
+        padded_tokens = [
+            tokens + ["[PAD]" for _ in range(max_length - len(tokens))]
+            for tokens in all_tokens
+        ]
 
-	def forward(self, sentences):
-		'''
-		Feed the batch of sentences to a BERT encoder to obtain contextualized representations of each token
-		'''
-		#Preprocess sentences
-		token_ids, attn_masks, input_lengths, index_retrieve = self.bertify_input(sentences)
+        # Convert tokens to token ids
+        token_ids = torch.tensor(
+            [
+                self.bert_tokenizer.convert_tokens_to_ids(tokens)
+                for tokens in padded_tokens
+            ]
+        ).to(self.device)
 
-		#Feed through bert
-		cont_reps, _ = self.bert_layer(token_ids, attention_mask = attn_masks)
+        # Obtain attention masks
+        pad_token = self.bert_tokenizer.convert_tokens_to_ids("[PAD]")
+        attn_masks = (token_ids != pad_token).long()
 
-		return cont_reps, input_lengths, token_ids, index_retrieve
+        return token_ids, attn_masks, input_lengths, index_retrieve
+
+    def forward(self, sentences):
+        """
+        Feed the batch of sentences to a BERT encoder to obtain contextualized representations of each token
+        """
+        # Preprocess sentences
+        token_ids, attn_masks, input_lengths, index_retrieve = self.bertify_input(
+            sentences
+        )
+
+        # Feed through bert
+        return (
+            self.bert_layer(token_ids, attention_mask=attn_masks).last_hidden_state,
+            input_lengths,
+            token_ids,
+            index_retrieve,
+        )
+
 
 class RobertaEncoder(nn.Module):
-	def __init__(self, roberta_model = 'roberta-base', device = 'cuda:0 ', freeze_roberta = False):
-		super(RobertaEncoder, self).__init__()
-		self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
-		self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
-		self.device = device
-		
-		if freeze_roberta:
-			for p in self.roberta_layer.parameters():
-				p.requires_grad = False
-		
-	def robertify_input(self, sentences):
-		'''
-		Preprocess the input sentences using roberta tokenizer and converts them to a torch tensor containing token ids
+    def __init__(
+        self, roberta_model="roberta-base", device="cuda:0 ", freeze_roberta=False
+    ):
+        super(RobertaEncoder, self).__init__()
+        self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
+        self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
+        self.device = device
 
-		'''
-		# Tokenize the input sentences for feeding into RoBERTa
-		all_tokens  = [['<s>'] + self.roberta_tokenizer.tokenize(sentence) + ['</s>'] for sentence in sentences]
-		
-		index_retrieve = []
-		for sent in all_tokens:
-			cur_ls = [1]
-			for j in range(2, len(sent)):
-				if sent[j][0] == '\u0120':
-					cur_ls.append(j)
-			index_retrieve.append(cur_ls)				
-		
-		# Pad all the sentences to a maximum length
-		input_lengths = [len(tokens) for tokens in all_tokens]
-		max_length    = max(input_lengths)
-		padded_tokens = [tokens + ['<pad>' for _ in range(max_length - len(tokens))] for tokens in all_tokens]
+        if freeze_roberta:
+            for p in self.roberta_layer.parameters():
+                p.requires_grad = False
 
-		# Convert tokens to token ids
-		token_ids = torch.tensor([self.roberta_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
+    def robertify_input(self, sentences):
+        """
+        Preprocess the input sentences using roberta tokenizer and converts them to a torch tensor containing token ids
 
-		# Obtain attention masks
-		pad_token = self.roberta_tokenizer.convert_tokens_to_ids('<pad>')
-		attn_masks = (token_ids != pad_token).long()
+        """
+        # Tokenize the input sentences for feeding into RoBERTa
+        all_tokens = [
+            ["<s>"] + self.roberta_tokenizer.tokenize(sentence) + ["</s>"]
+            for sentence in sentences
+        ]
 
-		return token_ids, attn_masks, input_lengths, index_retrieve
+        index_retrieve = []
+        for sent in all_tokens:
+            cur_ls = [1]
+            for j in range(2, len(sent)):
+                if sent[j][0] == "\u0120":
+                    cur_ls.append(j)
+            index_retrieve.append(cur_ls)
 
-	def forward(self, sentences):
-		'''
-		Feed the batch of sentences to a RoBERTa encoder to obtain contextualized representations of each token
-		'''
-		# Preprocess sentences
-		token_ids, attn_masks, input_lengths, index_retrieve = self.robertify_input(sentences)
+        # Pad all the sentences to a maximum length
+        input_lengths = [len(tokens) for tokens in all_tokens]
+        max_length = max(input_lengths)
+        padded_tokens = [
+            tokens + ["<pad>" for _ in range(max_length - len(tokens))]
+            for tokens in all_tokens
+        ]
 
-		# Feed through RoBERTa
-		cont_reps, _ = self.roberta_layer(token_ids, attention_mask = attn_masks)
+        # Convert tokens to token ids
+        token_ids = torch.tensor(
+            [
+                self.roberta_tokenizer.convert_tokens_to_ids(tokens)
+                for tokens in padded_tokens
+            ]
+        ).to(self.device)
 
-		return cont_reps, input_lengths, token_ids, index_retrieve
+        # Obtain attention masks
+        pad_token = self.roberta_tokenizer.convert_tokens_to_ids("<pad>")
+        attn_masks = (token_ids != pad_token).long()
+
+        return token_ids, attn_masks, input_lengths, index_retrieve
+
+    def forward(self, sentences):
+        """
+        Feed the batch of sentences to a RoBERTa encoder to obtain contextualized representations of each token
+        """
+        # Preprocess sentences
+        token_ids, attn_masks, input_lengths, index_retrieve = self.robertify_input(
+            sentences
+        )
+
+        # Feed through RoBERTa
+        return (
+            self.roberta_layer(token_ids, attention_mask=attn_masks).last_hidden_state,
+            input_lengths,
+            token_ids,
+            index_retrieve,
+        )
