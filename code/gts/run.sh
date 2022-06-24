@@ -18,14 +18,12 @@ else
         -mode train \
         -embedding roberta \
         -emb_name roberta-base \
-        -emb1_size 768 \
         -emb_lr 8e-6 \
-        -hidden_size 256 \
+        -cell_type lstm \
         -depth 2 \
-        -lr 2e-4 \
+        -lr 1e-4 \
         -batch_size 4 \
         -epochs ${1} \
-        -early_stopping ${1} \
         -dataset ${2} \
         -run_name ${RUN_NAME} \
         -full_cv \

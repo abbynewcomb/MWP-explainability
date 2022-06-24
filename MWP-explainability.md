@@ -93,3 +93,26 @@ Once you have a trained model in the `models/` directory test like this:
 # Specify the number of epochs and the dataset
 sh run.sh test cv_asdiv-a
 ```
+
+# GTS
+
+First move to the GTS directory:
+
+```bash
+cd code/gts
+```
+
+To train:
+
+```bash
+# Specify the number of epochs and the dataset
+sh run.sh 50 cv_asdiv-a
+```
+
+Once you have a trained model in the `models/` directory test like this:
+
+```bash
+# Specify the number of epochs and the dataset
+sh run.sh test cv_asdiv-a
+```
+
