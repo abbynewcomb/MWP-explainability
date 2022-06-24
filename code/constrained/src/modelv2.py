@@ -18,7 +18,6 @@ from src.utils.sentence_processing import *
 from src.utils.logger import print_log, store_results
 from src.utils.helper import save_checkpoint, bleu_scorer
 from src.utils.evaluate import cal_score, stack_to_string, get_infix_eq
-from src.confidence_estimation import *
 from collections import OrderedDict
 
 try:

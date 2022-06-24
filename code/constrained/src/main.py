@@ -15,10 +15,9 @@ except ImportError:
 
 from src.args import build_parser
 from src.utils.helper import *
-from src.utils.logger import get_logger, print_log, store_results, store_val_results
+from src.utils.logger import get_logger, print_log, store_val_results
 from src.dataloader import TextDataset
 from src.modelv2 import build_model, train_model, run_validation, estimate_confidence
-from src.confidence_estimation import *
 
 global log_folder
 global model_folder
