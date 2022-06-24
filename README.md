@@ -68,7 +68,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the test and the dataset
+# Specify test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -92,7 +92,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the test and the dataset
+# Specify test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -114,7 +114,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the test and the dataset
+# Specify test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -136,7 +136,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the test and the dataset
+# Specify test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -158,6 +158,6 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the test and the dataset
+# Specify test and the dataset
 sh run.sh test cv_asdiv-a
 ```
