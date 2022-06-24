@@ -9,7 +9,8 @@ if [ ${1} == 'test' ]; then
         -mode test \
         -dataset ${2} \
         -run_name ${RUN_NAME} \
-        -full_cv
+        -full_cv \
+        ${@:3}
 else
     # Training
     python -m src.main \
@@ -28,6 +29,7 @@ else
         -dataset ${2} \
         -run_name ${RUN_NAME} \
         -full_cv \
-        -save_model
+        -save_model \
+        ${@:3}
 fi
 

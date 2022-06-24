@@ -1,12 +1,8 @@
-import logging
-import pdb
 import torch
 from glob import glob
-from torch.autograd import Variable
-import numpy as np
 import os
-import sys
 from src.utils.bleu import compute_bleu
+from nltk.translate.bleu_score import corpus_bleu
 
 # Ignore warnings
 import warnings

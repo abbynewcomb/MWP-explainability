@@ -1,6 +1,5 @@
 import logging
 import pdb
-import pandas as pd
 
 # Ignore warnings
 import warnings

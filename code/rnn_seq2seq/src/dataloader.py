@@ -1,13 +1,7 @@
 import os
-import logging
-import pdb
 import re
-import torch
 from torch.utils.data import Dataset
 import pandas as pd
-import numpy as np
-import unicodedata
-from collections import OrderedDict
 
 
 class TextDataset(Dataset):
@@ -40,7 +34,7 @@ class TextDataset(Dataset):
         elif datatype == "dev":
             file_path = os.path.join(data_path, dataset, "dev.csv")
         else:
-            file_path = os.path.join(data_path, dataset, "dev.csv")
+            file_path = os.path.join(data_path, dataset, "test.csv")
 
         if grade_info:
             self.grade_info = True

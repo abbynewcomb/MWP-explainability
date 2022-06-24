@@ -12,6 +12,7 @@ from src.utils.logger import print_log, store_results
 from src.utils.helper import save_checkpoint, bleu_scorer
 from src.utils.evaluate import cal_score, stack_to_string
 from collections import OrderedDict
+import pandas as pd
 
 
 class PositionalEncoding(nn.Module):
@@ -570,7 +571,7 @@ def train_model(
 
         if config.save_writer and writer:
             writer.add_scalar("loss/val_loss", val_loss_epoch, epoch + epoch_offset)
-            writer.add_scalar("acc/val_score", val_score_epoch[0], epoch + epoch_offset)
+            writer.add_scalar("acc/val_score", val_acc_epoch, epoch + epoch_offset)
 
         od = OrderedDict()
         od["Epoch"] = epoch + epoch_offset
