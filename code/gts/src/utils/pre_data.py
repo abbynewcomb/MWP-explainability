@@ -102,16 +102,23 @@ class Lang:
             self.word2index[j] = i
 
 
-def load_raw_data(data_path, dataset, is_train=True):  # load the data to list(dict())
+def load_raw_data(
+    data_path, dataset, is_train=True, mode="train"
+):  # load the data to list(dict())
     train_ls = None
     if is_train:
         train_path = os.path.join(data_path, dataset, "train.csv")
         train_df = pd.read_csv(train_path)
         train_ls = train_df.to_dict("records")
 
-    dev_path = os.path.join(data_path, dataset, "dev.csv")
-    dev_df = pd.read_csv(dev_path)
-    dev_ls = dev_df.to_dict("records")
+    if mode == "test":
+        dev_path = os.path.join(data_path, dataset, "test.csv")
+        dev_df = pd.read_csv(dev_path)
+        dev_ls = dev_df.to_dict("records")
+    else:
+        dev_path = os.path.join(data_path, dataset, "dev.csv")
+        dev_df = pd.read_csv(dev_path)
+        dev_ls = dev_df.to_dict("records")
 
     return train_ls, dev_ls
 

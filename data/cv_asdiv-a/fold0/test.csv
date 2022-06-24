@@ -1,0 +1,3 @@
+Question,Numbers,Equation,Answer,group_nums,Grade,Type,Body,Ques_Statement
+number0 red apples and number1 green apples are in the basket . how many apples are in the basket ?,7 2,+ number0 number1,9.0,"[0, 1, 2, 3, 4, 5, 6, 10, 16, 17, 18]",1,Addition,number0 red apples and number1 green apples are in the basket .,how many apples are in the basket ?
+ellen has number0 more balls than marin . marin has number1 balls . how many balls does ellen have ?,6 9,+ number0 number1,15.0,"[1, 2, 3, 4, 5, 9, 10, 11, 16, 17, 18]",1,Addition,ellen has number0 more balls than marin . marin has number1 balls .,how many balls does ellen have ?
