@@ -294,7 +294,12 @@ def main():
                     config.gpu = gpu
 
                 model = build_model(
-                    config=config, voc1=voc1, voc2=voc2, device=device, logger=logger
+                    config=config,
+                    voc1=voc1,
+                    voc2=voc2,
+                    device=device,
+                    logger=logger,
+                    num_iters=len(test_dataloader),
                 )
 
                 (
@@ -322,12 +327,10 @@ def main():
                 od["best_epoch"] = best_epoch
                 print_log(logger, od)
 
-                test_acc_epoch, test_loss_epoch = run_validation(
-                    config, model, test_dataloader, voc1, voc2, device, logger
+                test_acc_epoch = run_validation(
+                    config, model, test_dataloader, voc1, voc2, device, logger, 0
                 )
-                logger.info(
-                    "Accuracy: {} \t Loss: {}".format(test_acc_epoch, test_loss_epoch)
-                )
+                logger.info("Accuracy: {}".format(test_acc_epoch))
 
             fold_acc_score += max_val_acc
             folds_scores.append(max_val_acc)

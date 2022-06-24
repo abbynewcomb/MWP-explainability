@@ -831,12 +831,12 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
                     break
 
         val_loss_epoch += val_loss
-        batch_num += 1
         print(
             "Completed {} / {}...".format(batch_num, total_batches),
             end="\r",
             flush=True,
         )
+        batch_num += 1
 
     val_bleu_epoch = bleu_scorer(refs, hyps)
     if config.mode == "test":
