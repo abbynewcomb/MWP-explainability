@@ -18,11 +18,13 @@ else
         -mode train \
         -embedding roberta \
         -emb_name roberta-base \
-        -emb_lr 8e-6 \
         -cell_type lstm \
-        -hidden_size 256 \
-        -lr 1e-4 \
-        -batch_size 4 \
+        -hidden_size 384 \
+        -depth 2 \
+        -lr 8e-4 \
+        -emb_lr 1e-5 \
+        -batch_size 8 \
+        -dropout .5 \
         -epochs ${1} \
         -dataset ${2} \
         -run_name ${RUN_NAME} \
