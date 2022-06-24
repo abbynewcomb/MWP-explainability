@@ -33,6 +33,14 @@ Since this command is pretty long, the equivalent using a relative `run.sh` scri
 sh run.sh 50 cv_asdiv-a
 ```
 
+To use a gpu, you can add the `-gpu` flag to the end:
+
+
+```bash
+# Specify the number of epochs and the dataset
+sh run.sh 50 cv_asdiv-a -gpu 0
+```
+
 Once set up, you should be able to train the models.
 
 From what I can tell, adversary "attacks" could be implemented in each `data/*/test.csv`. These are the files used in testing.
