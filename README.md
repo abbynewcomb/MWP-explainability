@@ -35,7 +35,7 @@ Since this command is pretty long, the equivalent using a relative `run.sh` scri
 sh run.sh 50 cv_asdiv-a
 ```
 
-To use a gpu, you can add the `-gpu` flag to the end:
+To use a gpu, you can add the `-gpu` flag to the end of any `run.sh` script command:
 
 
 ```bash
@@ -68,7 +68,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the number of epochs and the dataset
+# Specify the test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -92,7 +92,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the number of epochs and the dataset
+# Specify the test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -114,7 +114,7 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
-# Specify the number of epochs and the dataset
+# Specify the test and the dataset
 sh run.sh test cv_asdiv-a
 ```
 
@@ -136,6 +136,28 @@ sh run.sh 50 cv_asdiv-a
 Once you have a trained model in the `models/` directory test like this:
 
 ```bash
+# Specify the test and the dataset
+sh run.sh test cv_asdiv-a
+```
+
+# Constrained
+
+First move to the Constrained directory:
+
+```bash
+cd code/constrained
+```
+
+To train:
+
+```bash
 # Specify the number of epochs and the dataset
+sh run.sh 50 cv_asdiv-a
+```
+
+Once you have a trained model in the `models/` directory test like this:
+
+```bash
+# Specify the test and the dataset
 sh run.sh test cv_asdiv-a
 ```
