@@ -16,6 +16,8 @@ Alternatively:
 chmod +x setup.sh && ./setup.sh
 ```
 
+Once set up, you should be able to train the models.
+
 # Running The Code
 
 I'd try to closely follow how the SVAMP paper lays out their training. You'll most-likely need to hit a similar benchmark in training as described in their paper (for each model).
@@ -39,11 +41,16 @@ To use a gpu, you can add the `-gpu` flag to the end of any `run.sh` script comm
 
 
 ```bash
-# Specify the number of epochs and the dataset
 sh run.sh 50 cv_asdiv-a -gpu 0
 ```
 
-Once set up, you should be able to train the models.
+To see help for any command (in the case of wanting to modify a `run.sh` with other model params), add the `-h` flag to the end of any `run.sh` script command:
+
+```bash
+sh run.sh 50 cv_asdiv-a -h
+```
+
+#  Testing Adversarial Attacks
 
 From what I can tell, adversary "attacks" could be implemented in each `data/*/test.csv`. These are the files used in testing.
 
