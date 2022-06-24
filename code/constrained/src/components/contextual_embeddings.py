@@ -58,12 +58,10 @@ class BertEncoder(nn.Module):
         token_ids, attn_masks, input_lengths = self.bertify_input(sentences)
 
         # Feed through bert
-        return (
-            self.bert_layer.get_input_embeddings()(
-                token_ids.transpose(0, 1)
-            ).last_hidden_state,
-            input_lengths,
-        )
+        # cont_reps, _ = self.bert_layer(token_ids, attention_mask = attn_masks)
+        cont_reps = self.roberta_layer.get_input_embeddings()(token_ids.transpose(0, 1))
+
+        return cont_reps, input_lengths
 
 
 class RobertaEncoder(nn.Module):
@@ -120,10 +118,7 @@ class RobertaEncoder(nn.Module):
         token_ids, attn_masks, input_lengths = self.robertify_input(sentences)
 
         # Feed through RoBERTa
-        return (
-            self.roberta_layer.get_input_embeddings()(
-                token_ids.transpose(0, 1)
-            ).last_hidden_state,
-            input_lengths,
-        )
+        # cont_reps, _ = self.roberta_layer(token_ids, attention_mask = attn_masks)
+        cont_reps = self.roberta_layer.get_input_embeddings()(token_ids.transpose(0, 1))
 
+        return cont_reps, input_lengths
