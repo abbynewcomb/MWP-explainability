@@ -16,6 +16,13 @@ Alternatively:
 chmod +x setup.sh && ./setup.sh
 ```
 
+Then run the following to install dependencies:
+
+```bash
+. venv/bin/activate
+pip install -r code/requirements.txt
+```
+
 Once set up, you should be able to train the models.
 
 # Running The Code
