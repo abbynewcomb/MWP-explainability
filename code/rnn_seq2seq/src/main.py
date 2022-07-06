@@ -288,10 +288,21 @@ def main():
 
             else:
                 gpu = config.gpu
-
+                conf = config.conf
+                sim_criteria = config.sim_criteria
+                adv = config.adv
+                mode = config.mode
+                dataset = config.dataset
+                batch_size = config.batch_size
                 with open(config_file, "rb") as f:
                     config = AttrDict(pickle.load(f))
                     config.gpu = gpu
+                    config.conf = conf
+                    config.sim_criteria = sim_criteria
+                    config.adv = adv
+                    config.mode = mode
+                    config.dataset = dataset
+                    config.batch_size = batch_size
 
                 model = build_model(
                     config=config,
