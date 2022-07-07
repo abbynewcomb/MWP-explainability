@@ -638,9 +638,11 @@ def main():
                     if val_ac:
                         value_ac += 1
                         cur_result = 1
+                        max_value_corr += 1
                     if equ_ac:
                         equation_ac += 1
                     eval_total += 1
+                    len_total_eval += 1
 
                     with open(config.outputs_path + "/outputs.txt", "a") as f_out:
                         f_out.write("Example: " + str(ex_num) + "\n")
@@ -691,13 +693,13 @@ def main():
 
                     ex_num += 1
 
+                best_acc.append((max_value_corr, len_total_eval))
+
                 logger.debug(
                     "Validation Completed...\nTime Taken: {}".format(
                         time_since(time.time() - start)
                     )
                 )
-
-            best_acc.append((max_value_corr, len_total_eval))
 
         total_value_corr = 0
         total_len = 0
@@ -1310,6 +1312,16 @@ def main():
                 checkpoint,
                 logger,
                 device,
+            )
+
+            print(
+                epoch_offset,
+                min_train_loss,
+                max_train_acc,
+                max_val_acc,
+                equation_acc,
+                best_epoch,
+                generate_nums,
             )
 
             logger.info("Prediction from")
