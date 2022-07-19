@@ -713,6 +713,8 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 
     if config.mode == "test":
         questions, gen_eqns, act_eqns, scores, conf_scores = [], [], [], [], []
+    if config.mode == "input_reduction":
+        questions, gen_eqns, act_eqns, scores, conf_scores, final_numbers, final_answers = [], [], [], [], [], [], []
 
     display_n = config.batch_size
 
@@ -726,6 +728,7 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
         sent2s = sents_to_idx(voc2, data["eqn"], config.max_length)
         nums = data["nums"]
         ans = data["ans"]
+        
         if config.grade_disp:
             grade = data["grade"]
         if config.type_disp:
@@ -767,7 +770,19 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
                 for i in range(sent1_var.size(1))
             ]
             conf_scores += [calc_posterior_based_conf(decoder_probs[i]) for i in range(sent1_var.size(1))]
-            
+
+        if config.mode == "input_reduction":
+            questions += data["ques"]
+            gen_eqns += [" ".join(decoder_output[i]) for i in range(sent1_var.size(1))]
+            act_eqns += [" ".join(sent2s[i]) for i in range(sent2_var.size(1))]
+            scores += [
+                cal_score([decoder_output[i]], [nums[i]], [ans[i]], [data["eqn"][i]])[0]
+                for i in range(sent1_var.size(1))
+            ]
+            conf_scores += [calc_posterior_based_conf(decoder_probs[i]) for i in range(sent1_var.size(1))]
+            final_numbers += nums
+            final_answers += [ans[i].item() for i in range(sent1_var.size(1))]
+        
 
         with open(config.outputs_path + "/outputs.txt", "a") as f_out:
             f_out.write("Batch: " + str(batch_num) + "\n")
@@ -843,8 +858,11 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
         batch_num += 1
 
     val_bleu_epoch = bleu_scorer(refs, hyps)
+
     if config.mode == "test":
-        results_df = pd.DataFrame([questions, act_eqns, gen_eqns, scores, conf_scores]).transpose()
+        results_df = pd.DataFrame([
+            questions, act_eqns, gen_eqns, scores, conf_scores
+        ]).transpose()
         results_df.columns = [
             "Question",
             "Actual Equation",
@@ -858,13 +876,17 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 
 
     if config.mode == "input_reduction":
-        results_df = pd.DataFrame([questions, act_eqns, gen_eqns, scores, conf_scores]).transpose()
+        results_df = pd.DataFrame([
+            questions, act_eqns, gen_eqns, scores, conf_scores, final_numbers, final_answers
+        ]).transpose()
         results_df.columns = [
             "Question",
             "Actual Equation",
             "Generated Equation",
             "Score",
             "Model Confidence",
+            "Numbers",
+            "Answer",
         ]
         return results_df
 

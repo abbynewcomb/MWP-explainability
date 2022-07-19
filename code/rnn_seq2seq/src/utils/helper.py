@@ -90,7 +90,7 @@ def load_checkpoint(config, model, mode, ckpt_path, logger, device):
 
     model.to(device)
 
-    if mode == "train":
+    if mode == "train" or mode == "input_reduction":
         model.train()
     else:
         model.eval()

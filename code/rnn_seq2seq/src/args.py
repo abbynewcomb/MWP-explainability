@@ -12,8 +12,8 @@ def build_parser():
         "-mode",
         type=str,
         default="train",
-        choices=["train", "test", "conf"],
-        help="Modes: train, test, conf",
+        choices=["train", "test", "conf", "input_reduction"],
+        help="Modes: train, test, conf, input_reduction",
     )
     parser.add_argument(
         "-debug", dest="debug", action="store_true", help="Operate in debug mode"

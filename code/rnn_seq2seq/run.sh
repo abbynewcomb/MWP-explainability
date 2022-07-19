@@ -1,18 +1,9 @@
 #!/bin/bash
 
-# Training
 RUN_NAME=run_${2}
 
-if [ ${1} == 'test' ]; then
-    # Testing
-    python -m src.main \
-        -mode test \
-        -dataset ${2} \
-        -run_name ${RUN_NAME} \
-        -full_cv \
-        ${@:3}
-else
-    # Training
+if [ ${1} == 'train' ]; then
+    # Training                                                                                      
     python -m src.main \
         -seed 12345 \
         -mode train \
@@ -31,6 +22,14 @@ else
         -run_name ${RUN_NAME} \
         -full_cv \
         -save_model \
+        ${@:3}
+
+else
+    # Testing or input reduction
+    python -m src.main \
+        -mode ${1} \
+        -dataset ${2} \
+        -run_name ${RUN_NAME} \
         ${@:3}
 fi
 
