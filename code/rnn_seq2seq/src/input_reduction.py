@@ -42,7 +42,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
     # check that answer to initial question is correct
     if val_res.at[0,"Score"] == 1:
         logger.info("Beginning input reduction algorithm")
-        logger.info("Model Confidence: {}\tQuestion: {}".format(
+        logger.info("Orig Model Confidence: {}\tOrig Question: {}".format(
             gradual_reduced_input_list.at[ 0, "Model Confidence" ],
             gradual_reduced_input_list.at[ 0, "Question" ])
         )
@@ -91,13 +91,15 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
                 config, model, dataloader, voc1, voc2, device, logger, epoch_num
 
             )
+            if len(gradual_reduced_input_list) == 1:
+                print(val_res[["Question","Model Confidence"]])
             # grab question with highest conf score, save to gradual_reduced_input_list
             val_res["Model Confidence"] = pd.to_numeric(val_res["Model Confidence"])
             highest_conf_index = val_res["Model Confidence"].idxmax()
-            logger.info("Model Confidence: {}\tQuestion: {}".format(
+            print("Model Confidence: {}\tQuestion: {}".format(
                 val_res.at[ highest_conf_index, "Model Confidence" ],
-                val_res.at[ highest_conf_index, "Question" ])
-            )
+                val_res.at[ highest_conf_index, "Question" ]
+            ), flush=True)
             gradual_reduced_input_list = gradual_reduced_input_list.append({
                 "Question": val_res.at[highest_conf_index,"Question"],
                 "Removed Word": which_word_removed(
@@ -114,6 +116,9 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
             if gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Score" ] == 0:
                 keep_going = False
 
+    else: # model prediction for first question was incorrect
+        logger.info("incorrect prediction from model for normal question")
+                
     # return result dataframe
     return gradual_reduced_input_list
 

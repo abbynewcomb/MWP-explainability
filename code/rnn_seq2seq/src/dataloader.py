@@ -32,6 +32,7 @@ class TextDataset(Dataset):
         type_info=False,
         challenge_info=False,
         mode="test",
+        input_red_idx=None,
     ):
         if datatype == "train":
             file_path = os.path.join(data_path, dataset, "train.csv")
@@ -59,7 +60,7 @@ class TextDataset(Dataset):
         if dataframe is not None:
             file_df = dataframe
         elif mode == "input_reduction" and not dataframe:
-            file_df = pd.read_csv(file_path).head(1)
+            file_df = pd.read_csv(file_path).iloc[[input_red_idx]]
         else:
             file_df = pd.read_csv(file_path)
             

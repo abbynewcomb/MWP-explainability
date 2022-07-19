@@ -387,4 +387,13 @@ def build_parser():
         "-adv", action="store_true", help="If dealing with out of distribution examples"
     )
 
+    # input_reduction parameter
+    parser.add_argument(
+        "-input_red_idx",
+        type=int,
+        default=None,
+        help="index of file cv_mawps/fold0/dev.csv to use in input reduction algorithm",
+    )
+
+    
     return parser

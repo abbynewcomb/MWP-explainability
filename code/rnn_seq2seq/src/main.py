@@ -46,6 +46,7 @@ def load_data(config, logger):
         Returns:
             dataloader(s)
     """
+    
     if config.mode == "train":
         logger.debug("Loading Training Data...")
 
@@ -86,17 +87,28 @@ def load_data(config, logger):
 
         return train_dataloader, val_dataloader
 
+
     elif config.mode == "test" or config.mode == "conf" or config.mode == "input_reduction":
         logger.debug("Loading Test Data...")
 
-        test_set = TextDataset(
-            data_path=data_path,
-            dataset=config.dataset,
-            datatype="test",
-            max_length=config.max_length,
-            is_debug=config.debug,
-            mode=config.mode
-        )
+        if config.mode == "input_reduction":
+            test_set = TextDataset(
+                data_path=data_path,
+                dataset=config.dataset,
+                datatype="test",
+                max_length=config.max_length,
+                is_debug=config.debug,
+                mode=config.mode,
+                input_red_idx = config.input_red_idx,
+            )
+        else:
+            test_set = TextDataset(
+                data_path=data_path,
+                dataset=config.dataset,
+                datatype="test",
+                max_length=config.max_length,
+                is_debug=config.debug,
+            )
             
         test_dataloader = DataLoader(
             test_set, batch_size=config.batch_size, shuffle=True, num_workers=5
@@ -116,6 +128,7 @@ def main():
     args = parser.parse_args()
     config = args
     mode = config.mode
+    input_red_idx = config.input_red_idx
     if mode == "train":
         is_train = True
     else:
@@ -548,7 +561,12 @@ def main():
                 res = input_reduction(
                     config, model, test_dataloader, voc1, voc2, device, logger, 0,
                 )
-                res.to_csv(config.outputs_path + "/input_reduction.csv")
+                res.to_csv(
+                    config.outputs_path +
+                    "/input_reduction" +
+                    str(input_red_idx) +
+                    ".csv"
+                )
             else:
                 estimate_confidence(config, model, test_dataloader, logger)
 
