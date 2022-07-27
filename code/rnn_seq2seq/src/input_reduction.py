@@ -2,11 +2,12 @@ import pandas as pd
 import nltk
 from torch.utils.data import DataLoader
 
-from src.modelv2 import run_validation
+from src.modelv2 import run_validation, Seq2SeqModel
 from src.dataloader import TextDataset
+from src.utils.sentence_processing import sents_to_idx, process_batch
 
 
-def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch_num):
+def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch_num, beam_size=5):
     """
     function to perform input reduction. evaluates model on 
         successively smaller inputs of same question until 
@@ -55,72 +56,98 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
         keep_going = True # we keep going until the reduced input w/ highest conf is not correct
 
         while keep_going:
-            
-            # get list of options for removing each word in previous level question
-            options = remove_each_word(
-                gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Question" ]
-            )
-            if len(options) == 0:
-                break;
-            # format options with other required columns (equation, numbers, answer)
-            options = pd.DataFrame({
-                "Question": options,
-                "Equation": [eqn] * len(options),
-                "Numbers": [numbers] * len(options),
-                "Answer": [answer] * len(options),
-            })
 
-            
-            # load data into dataloader object
-            dataset = TextDataset(
-                data_path=None,
-                dataset=config.dataset,
-                datatype="test",
-                dataframe=options, # the important line
-                max_length=config.max_length,
-                is_debug=config.debug,
-                mode=config.mode,
+            # remove least important token, append info to reduced input list
+            res_dict = remove_one_token(
+                config = config,
+                model = model,
+                voc1 = voc1,
+                voc2 = voc2,
+                device = device,
+                logger = logger,
+                epoch_num = epoch_num,
+                instance = gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Question" ],
+                numbers = numbers,
+                answer = answer,
+                eqn = eqn,
+                beam_size = beam_size,
             )
-            dataloader = DataLoader(
-                dataset, batch_size=config.batch_size, shuffle=False, num_workers=5
-            )
-
-            
-            # make predictions and get confidence scores and actual scores for reduced inputs
-            val_res = run_validation(
-                config, model, dataloader, voc1, voc2, device, logger, epoch_num
-
-            )
-            if len(gradual_reduced_input_list) == 1:
-                print(val_res[["Question","Model Confidence"]])
-            # grab question with highest conf score, save to gradual_reduced_input_list
-            val_res["Model Confidence"] = pd.to_numeric(val_res["Model Confidence"])
-            highest_conf_index = val_res["Model Confidence"].idxmax()
-            print("Model Confidence: {}\tQuestion: {}".format(
-                val_res.at[ highest_conf_index, "Model Confidence" ],
-                val_res.at[ highest_conf_index, "Question" ]
-            ), flush=True)
+            if not any(res_dict): # no options to reduce (only necessary tokens remaining)
+                break
             gradual_reduced_input_list = gradual_reduced_input_list.append({
-                "Question": val_res.at[highest_conf_index,"Question"],
+                "Question": res_dict["q"],
                 "Removed Word": which_word_removed(
-                    gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Question" ],
-                    val_res.at[ highest_conf_index, "Question" ],
+                    gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Question"],
+                    res_dict["q"],
                 ),
-                "Model Confidence": val_res.at[highest_conf_index,"Model Confidence"],
-                "Generated Equation": val_res.at[highest_conf_index,"Generated Equation"],
-                "Score": val_res.at[highest_conf_index,"Score"],
+                "Model Confidence": res_dict["conf"],
+                "Generated Equation": res_dict["gen_eq"],
+                "Score": res_dict["score"],
             }, ignore_index=True)
             
+            print("Model Confidence: {}\tQuestion: {}".format(
+                res_dict["conf"],
+                res_dict["q"],
+            ), flush=True)
             
             # check if answer is correct. if not, stop looping
             if gradual_reduced_input_list.at[ len(gradual_reduced_input_list)-1, "Score" ] == 0:
                 keep_going = False
 
     else: # model prediction for first question was incorrect
-        logger.info("incorrect prediction from model for normal question")
+        logger.info("incorrect prediction from model for original question")
                 
     # return result dataframe
     return gradual_reduced_input_list
+
+
+def remove_one_token(config, model, voc1, voc2, device, logger, epoch_num, instance, numbers, answer, eqn, beam_size):
+    """
+    compute best input which is one smaller than previous.
+
+    notable input: instance, the current thing to be made smaller
+                   beam_size, the size of the beam
+
+    output: dict of necessary info {q, gen_eq, score, conf}
+    """
+    # format instance with other required columns (equation, numbers, answer) and load to dataloader
+    instance = pd.DataFrame({
+        "Question": [instance],
+        "Equation": [eqn],
+        "Numbers": [numbers],
+        "Answer": [answer],
+    })
+    dataset = TextDataset(
+        data_path=None,
+        dataset=config.dataset,
+        datatype="test",
+        dataframe=instance, # the important line
+        max_length=config.max_length,
+        is_debug=config.debug,
+        mode=config.mode,
+    )
+    dataloader = DataLoader(
+        dataset, batch_size=config.batch_size, shuffle=False, num_workers=5
+    )
+
+
+    for idx, layer in enumerate(model.modules()):
+        if idx < 2:
+            print("{} {}".format(idx, layer))
+    
+    # start of using gradients                                                                      
+    for data in dataloader:
+        ques = ["rainbow"]
+        
+        sent1s = sents_to_idx(voc1, ques, config.max_length)
+        sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
+        sent1_var, sent2_var, input_len1, input_len2  = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+        model.get_gradients(config, ques, sent1_var, sent2_var, input_len1, input_len2, device, logger)
+    
+           
+    return pd.DataFrame([])
+
 
 
 def remove_each_word(question):
@@ -151,3 +178,4 @@ def which_word_removed(q1, q2):
             return q1_tokens[i]
         elif i == (len(q2_tokens))-1: # in case last word is the uncommon one, to avoid bad index on q2
             return q1_tokens[ i+1 ]
+

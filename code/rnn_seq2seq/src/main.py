@@ -557,6 +557,7 @@ def main():
                     config, model, test_dataloader, voc1, voc2, device, logger, 0
                 )
                 logger.info("Accuracy: {}".format(test_acc_epoch))
+                
             if config.mode == "input_reduction":
                 res = input_reduction(
                     config, model, test_dataloader, voc1, voc2, device, logger, 0,
@@ -567,6 +568,7 @@ def main():
                     str(input_red_idx) +
                     ".csv"
                 )
+                
             else:
                 estimate_confidence(config, model, test_dataloader, logger)
 

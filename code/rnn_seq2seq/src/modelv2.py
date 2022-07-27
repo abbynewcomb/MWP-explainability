@@ -222,6 +222,7 @@ class Seq2SeqModel(nn.Module):
             Returns:
 
         """
+        
         self.optimizer.zero_grad()
         if self.config.separate_opt:
             self.emb_optimizer.zero_grad()
@@ -294,6 +295,7 @@ class Seq2SeqModel(nn.Module):
                 self.loss += self.criterion(decoder_output, input_seq2[step])
                 decoder_input = topi.squeeze().detach()
 
+                
         self.loss.backward()
         if self.config.max_grad_norm > 0:
             torch.nn.utils.clip_grad_norm_(self.params, self.config.max_grad_norm)
@@ -458,12 +460,88 @@ class Seq2SeqModel(nn.Module):
 
             return hiddens, decoded_words
 
+    def get_gradients(
+            self,
+            config,
+            ques,
+            input_seq1,
+            input_seq2,
+            input_len1,
+            input_len2,
+            device=None,
+            Logger=None
+    ):
+        """
+        get the gradient of the model with respect to the token inputs for a single input question. note that token inputs are sub-word level, so will need to match them up again when computing score for each word
+        
+        input: 
+            the usual stuff, taken from trainer function
+        output:
+            a dictionary of (input_str, grad)
+        """
+        
+        # clear gradients
+        self.zero_grad()
+
+        # get embedding representation
+        if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+            input_seq1, input_len1 = self.embedding1(ques)
+            input_seq1 = input_seq1.transpose(0,1)
+            sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+        else:
+            sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+            sorted_seqs = self.embedding1(sorted_seqs)
+        print("embedding rep: {}".format(input_seq1.size()))
+
+        # run forward pass of encoder and decoder
+        encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+
+        self.loss = 0
+
+        decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device = self.device)
+
+        if config.cell_type == 'lstm':
+            decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+        else:
+            decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+
+        use_teacher_forcing = True if random.random() < self.config.teacher_forcing_ratio else False
+        target_len = max(input_len2)
+
+        if use_teacher_forcing:
+            for step in range(target_len):
+                if self.config.use_attn:
+                    decoder_output, decoder_hidden, decoder_attention, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                else:
+                    decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+                self.loss += self.criterion(decoder_output, input_seq2[step])
+                decoder_input = input_seq2[step]
+        else:
+            for step in range(target_len):
+                if self.config.use_attn:
+                    decoder_output, decoder_hidden, decoder_attention, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                else:
+                    decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+
+                topv, topi = decoder_output.topk(1)
+                self.loss += self.criterion(decoder_output, input_seq2[step])
+                print("loss 529")
+                decoder_input = topi.squeeze().detach()
+
+        # backward pass and return gradients
+        self.loss.backward()
+        grads = self.embedding1.roberta_layer.embeddings.word_embeddings.weight.grad
+        print(grads.size())
+
+        return 
+        
 
 def build_model(config, voc1, voc2, device, logger, num_iters):
     model = Seq2SeqModel(config, voc1, voc2, device, logger, num_iters)
     model = model.to(device)
 
     return model
+
 
 
 def train_model(
@@ -1026,10 +1104,18 @@ def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
                 entity = operand_types[z][1]
                 for y in range(len(hidden)):
                     if hidden[y][0] == entity:
-                        type_rep.append([operand_types[z][0], hidden[y][1]])
+                        type_rep.append([operand_types[z][0], hidden[y][ 1]])
 
             hiddens = hiddens + hidden
             operands = operands + type_rep
 
     return hiddens, operands
+
+
+
+
+
+
+
+
 

@@ -8,7 +8,7 @@ def calc_posterior_based_conf(decoded_log_probs):
     """
     given a single set of probabilities (for one problem), return a score of model's certainty
     """
-    posterior = np.exp(sum(decoded_log_probs)) 
+    posterior = np.prod(np.exp(decoded_log_probs))
     return posterior
 
 def posterior_based_conf(test_ques, model):
