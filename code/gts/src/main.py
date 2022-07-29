@@ -594,9 +594,11 @@ def main():
                     if val_ac:
                         value_ac += 1
                         cur_result = 1
+                        max_value_corr += 1
                     if equ_ac:
                         equation_ac += 1
                     eval_total += 1
+                    len_total_eval += 1
 
                     with open(config.outputs_path + "/outputs.txt", "a") as f_out:
                         f_out.write("Example: " + str(ex_num) + "\n")
@@ -647,32 +649,22 @@ def main():
 
                     ex_num += 1
 
+                best_acc.append((max_value_corr, len_total_eval))
+
                 logger.debug(
                     "Validation Completed...\nTime Taken: {}".format(
                         time_since(time.time() - start)
                     )
                 )
 
-            if config.results:
-                store_results(
-                    config,
-                    max_train_acc,
-                    max_val_acc,
-                    eq_acc,
-                    min_train_loss,
-                    best_epoch,
-                )
-                logger.info("Scores saved at {}".format(config.result_path))
-
-            best_acc.append((max_value_corr, len_total_eval))
-
         total_value_corr = 0
         total_len = 0
+
         for w in range(len(best_acc)):
-            folds_scores.append(float(best_acc[w][0]) / best_acc[w][1])
+            folds_scores.append(float(best_acc[w][0]) / (best_acc[w][1] or 1))
             total_value_corr += best_acc[w][0]
             total_len += best_acc[w][1]
-        fold_acc_score = float(total_value_corr) / total_len
+        fold_acc_score = float(total_value_corr) / (total_len or 1)
 
         store_val_results(config, fold_acc_score, folds_scores)
         logger.info("Final Val score: {}".format(fold_acc_score))

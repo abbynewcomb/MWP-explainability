@@ -6,7 +6,8 @@ import pandas as pd
 
 class TextDataset(Dataset):
     """
-        Expecting csv files with columns ['sent1', 'sent2']
+        Expecting csv files with columns ['Question', 'Equation', 'Numbers', 'Answer']
+        or alternatively pass in a dataframe with the same columns
 
         Args:
                         data_path: Root folder Containing all the data
@@ -14,6 +15,7 @@ class TextDataset(Dataset):
                         max_length: Self Explanatory
                         is_debug: Load a subset of data for faster testing
                         is_train:
+                        dataframe: a dataframe with the above columns which will be loaded as a dataset
 
     """
 
@@ -22,18 +24,21 @@ class TextDataset(Dataset):
         data_path="../../data/",
         dataset="mawps",
         datatype="train",
+        dataframe=None,
         max_length=30,
         is_debug=False,
         is_train=False,
         grade_info=False,
         type_info=False,
         challenge_info=False,
+        mode="test",
+        input_red_idx=None,
     ):
         if datatype == "train":
             file_path = os.path.join(data_path, dataset, "train.csv")
         elif datatype == "dev":
             file_path = os.path.join(data_path, dataset, "dev.csv")
-        else:
+        elif dataframe is None:
             file_path = os.path.join(data_path, dataset, "test.csv")
 
         if grade_info:
@@ -51,8 +56,14 @@ class TextDataset(Dataset):
         else:
             self.challenge_info = False
 
-        file_df = pd.read_csv(file_path)
-
+        # get dataset from either dataframe passed in or csv file
+        if dataframe is not None:
+            file_df = dataframe
+        elif mode == "input_reduction" and not dataframe:
+            file_df = pd.read_csv(file_path).iloc[[input_red_idx]]
+        else:
+            file_df = pd.read_csv(file_path)
+            
         self.ques = file_df["Question"].values
         self.eqn = file_df["Equation"].values
         self.nums = file_df["Numbers"].values

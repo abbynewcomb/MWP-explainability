@@ -5,6 +5,7 @@ from time import time
 import pandas as pd
 import torch
 import torch.nn as nn
+import numpy as np
 from torch import optim
 from transformers import AdamW
 from gensim import models
@@ -371,16 +372,17 @@ class Seq2SeqModel(nn.Module):
                     decoded_words[i].append(self.voc2.get_word(topi[i].item()))
                     decoded_probs[i].append(topv[i].item())
                 decoder_input = topi.squeeze().detach()
-
+                
             if validation:
                 if self.config.use_attn:
                     return (
                         loss / target_len,
                         decoded_words,
                         decoder_attentions[: step + 1],
+                        decoded_probs,
                     )
                 else:
-                    return loss / target_len, decoded_words, None
+                    return loss / target_len, decoded_words, None, decoded_probs
             else:
                 if return_probs:
                     return decoded_words, decoded_probs
@@ -710,7 +712,9 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
     hyps = []
 
     if config.mode == "test":
-        questions, gen_eqns, act_eqns, scores = [], [], [], []
+        questions, gen_eqns, act_eqns, scores, conf_scores = [], [], [], [], []
+    if config.mode == "input_reduction":
+        questions, gen_eqns, act_eqns, scores, conf_scores, final_numbers, final_answers = [], [], [], [], [], [], []
 
     display_n = config.batch_size
 
@@ -724,6 +728,7 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
         sent2s = sents_to_idx(voc2, data["eqn"], config.max_length)
         nums = data["nums"]
         ans = data["ans"]
+        
         if config.grade_disp:
             grade = data["grade"]
         if config.type_disp:
@@ -740,8 +745,8 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
             sent1s, sent2s, voc1, voc2, device
         )
 
-        val_loss, decoder_output, decoder_attn = model.greedy_decode(
-            ques, sent1_var, sent2_var, input_len1, input_len2, validation=True
+        val_loss, decoder_output, decoder_attn, decoder_probs = model.greedy_decode(
+            ques, sent1_var, sent2_var, input_len1, input_len2, validation=True, return_probs=True
         )
 
         temp_acc_cnt, temp_acc_tot, disp_corr = cal_score(
@@ -764,6 +769,20 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
                 cal_score([decoder_output[i]], [nums[i]], [ans[i]], [data["eqn"][i]])[0]
                 for i in range(sent1_var.size(1))
             ]
+            conf_scores += [calc_posterior_based_conf(decoder_probs[i]) for i in range(sent1_var.size(1))]
+
+        if config.mode == "input_reduction":
+            questions += data["ques"]
+            gen_eqns += [" ".join(decoder_output[i]) for i in range(sent1_var.size(1))]
+            act_eqns += [" ".join(sent2s[i]) for i in range(sent2_var.size(1))]
+            scores += [
+                cal_score([decoder_output[i]], [nums[i]], [ans[i]], [data["eqn"][i]])[0]
+                for i in range(sent1_var.size(1))
+            ]
+            conf_scores += [calc_posterior_based_conf(decoder_probs[i]) for i in range(sent1_var.size(1))]
+            final_numbers += nums
+            final_answers += [ans[i].item() for i in range(sent1_var.size(1))]
+        
 
         with open(config.outputs_path + "/outputs.txt", "a") as f_out:
             f_out.write("Batch: " + str(batch_num) + "\n")
@@ -839,18 +858,39 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
         batch_num += 1
 
     val_bleu_epoch = bleu_scorer(refs, hyps)
+
     if config.mode == "test":
-        results_df = pd.DataFrame([questions, act_eqns, gen_eqns, scores]).transpose()
+        results_df = pd.DataFrame([
+            questions, act_eqns, gen_eqns, scores, conf_scores
+        ]).transpose()
         results_df.columns = [
             "Question",
             "Actual Equation",
             "Generated Equation",
             "Score",
+            "Model Confidence",
         ]
         csv_file_path = os.path.join(config.outputs_path, config.dataset + ".csv")
         results_df.to_csv(csv_file_path, index=False)
         return sum(scores) / len(scores)
 
+
+    if config.mode == "input_reduction":
+        results_df = pd.DataFrame([
+            questions, act_eqns, gen_eqns, scores, conf_scores, final_numbers, final_answers
+        ]).transpose()
+        results_df.columns = [
+            "Question",
+            "Actual Equation",
+            "Generated Equation",
+            "Score",
+            "Model Confidence",
+            "Numbers",
+            "Answer",
+        ]
+        return results_df
+
+    
     val_acc_epoch = val_acc_epoch_cnt / val_acc_epoch_tot
 
     return val_bleu_epoch, val_loss_epoch / len(dataloader), val_acc_epoch

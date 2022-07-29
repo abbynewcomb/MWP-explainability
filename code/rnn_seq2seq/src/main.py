@@ -19,6 +19,7 @@ from src.utils.logger import get_logger, print_log, store_val_results
 from src.dataloader import TextDataset
 from src.modelv2 import build_model, train_model, run_validation, estimate_confidence
 from src.confidence_estimation import *
+from src.input_reduction import input_reduction
 
 global log_folder
 global model_folder
@@ -45,6 +46,7 @@ def load_data(config, logger):
         Returns:
             dataloader(s)
     """
+    
     if config.mode == "train":
         logger.debug("Loading Training Data...")
 
@@ -85,16 +87,29 @@ def load_data(config, logger):
 
         return train_dataloader, val_dataloader
 
-    elif config.mode == "test" or config.mode == "conf":
+
+    elif config.mode == "test" or config.mode == "conf" or config.mode == "input_reduction":
         logger.debug("Loading Test Data...")
 
-        test_set = TextDataset(
-            data_path=data_path,
-            dataset=config.dataset,
-            datatype="test",
-            max_length=config.max_length,
-            is_debug=config.debug,
-        )
+        if config.mode == "input_reduction":
+            test_set = TextDataset(
+                data_path=data_path,
+                dataset=config.dataset,
+                datatype="test",
+                max_length=config.max_length,
+                is_debug=config.debug,
+                mode=config.mode,
+                input_red_idx = config.input_red_idx,
+            )
+        else:
+            test_set = TextDataset(
+                data_path=data_path,
+                dataset=config.dataset,
+                datatype="test",
+                max_length=config.max_length,
+                is_debug=config.debug,
+            )
+            
         test_dataloader = DataLoader(
             test_set, batch_size=config.batch_size, shuffle=True, num_workers=5
         )
@@ -113,6 +128,7 @@ def main():
     args = parser.parse_args()
     config = args
     mode = config.mode
+    input_red_idx = config.input_red_idx
     if mode == "train":
         is_train = True
     else:
@@ -288,10 +304,21 @@ def main():
 
             else:
                 gpu = config.gpu
-
+                conf = config.conf
+                sim_criteria = config.sim_criteria
+                adv = config.adv
+                mode = config.mode
+                dataset = config.dataset
+                batch_size = config.batch_size
                 with open(config_file, "rb") as f:
                     config = AttrDict(pickle.load(f))
                     config.gpu = gpu
+                    config.conf = conf
+                    config.sim_criteria = sim_criteria
+                    config.adv = adv
+                    config.mode = mode
+                    config.dataset = dataset
+                    config.batch_size = batch_size
 
                 model = build_model(
                     config=config,
@@ -339,7 +366,7 @@ def main():
         store_val_results(config, fold_acc_score, folds_scores)
         logger.info("Final Val score: {}".format(fold_acc_score))
 
-    else:
+    else: ## NOT FULL_CV
         """Run Config files/paths"""
         run_name = config.run_name
         config.log_path = os.path.join(log_folder, run_name)
@@ -398,7 +425,7 @@ def main():
 
             logger.info("Vocab saved at {}".format(vocab1_path))
 
-        else:
+        else: ## not training
             test_dataloader = load_data(config, logger)
             logger.info("Loading Vocab File...")
 
@@ -475,7 +502,7 @@ def main():
                 writer,
             )
 
-        else:
+        else: ## not training
             gpu = config.gpu
             conf = config.conf
             sim_criteria = config.sim_criteria
@@ -530,6 +557,16 @@ def main():
                     config, model, test_dataloader, voc1, voc2, device, logger, 0
                 )
                 logger.info("Accuracy: {}".format(test_acc_epoch))
+            if config.mode == "input_reduction":
+                res = input_reduction(
+                    config, model, test_dataloader, voc1, voc2, device, logger, 0,
+                )
+                res.to_csv(
+                    config.outputs_path +
+                    "/input_reduction" +
+                    str(input_red_idx) +
+                    ".csv"
+                )
             else:
                 estimate_confidence(config, model, test_dataloader, logger)
 

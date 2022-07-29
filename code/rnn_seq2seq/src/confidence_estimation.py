@@ -3,6 +3,14 @@ import torch
 from src.utils.bleu import compute_bleu
 
 
+
+def calc_posterior_based_conf(decoded_log_probs):
+    """
+    given a single set of probabilities (for one problem), return a score of model's certainty
+    """
+    posterior = np.exp(sum(decoded_log_probs)) 
+    return posterior
+
 def posterior_based_conf(test_ques, model):
 
     decoded_words, decoded_log_probs = model.greedy_decode(test_ques, return_probs=True)

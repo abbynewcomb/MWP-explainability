@@ -12,8 +12,8 @@ def build_parser():
         "-mode",
         type=str,
         default="train",
-        choices=["train", "test", "conf"],
-        help="Modes: train, test, conf",
+        choices=["train", "test", "conf", "input_reduction"],
+        help="Modes: train, test, conf, input_reduction",
     )
     parser.add_argument(
         "-debug", dest="debug", action="store_true", help="Operate in debug mode"
@@ -387,4 +387,13 @@ def build_parser():
         "-adv", action="store_true", help="If dealing with out of distribution examples"
     )
 
+    # input_reduction parameter
+    parser.add_argument(
+        "-input_red_idx",
+        type=int,
+        default=None,
+        help="index of file cv_mawps/fold0/dev.csv to use in input reduction algorithm",
+    )
+
+    
     return parser
