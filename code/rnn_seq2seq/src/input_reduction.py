@@ -107,6 +107,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
                     val_res.at[ highest_conf_index, "Question" ],
                 ),
                 "Model Confidence": val_res.at[highest_conf_index,"Model Confidence"],
+                "Actual Equation": val_res.at[highest_conf_index, "Actual Equation"]
                 "Generated Equation": val_res.at[highest_conf_index,"Generated Equation"],
                 "Score": val_res.at[highest_conf_index,"Score"],
             }, ignore_index=True)
