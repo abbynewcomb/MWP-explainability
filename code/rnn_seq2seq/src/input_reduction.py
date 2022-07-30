@@ -23,6 +23,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
         "Question": [],
         "Removed Word": [],
         "Model Confidence": [],
+        "Actual Equation": [],
         "Generated Equation": [],
         "Score": [],
     })
@@ -34,6 +35,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
     gradual_reduced_input_list = gradual_reduced_input_list.append({
         "Question": val_res.at[0,"Question"],
         "Removed Word": None, # is original question, nothing removed yet
+        "Model Confidence": val_res.at[0,"Model Confidence"],
         "Model Confidence": val_res.at[0,"Model Confidence"],
         "Generated Equation": val_res.at[0,"Generated Equation"],
         "Score": val_res.at[0,"Score"],
@@ -107,7 +109,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
                     val_res.at[ highest_conf_index, "Question" ],
                 ),
                 "Model Confidence": val_res.at[highest_conf_index,"Model Confidence"],
-                "Actual Equation": val_res.at[highest_conf_index, "Actual Equation"]
+                "Actual Equation": val_res.at[highest_conf_index, "Actual Equation"],
                 "Generated Equation": val_res.at[highest_conf_index,"Generated Equation"],
                 "Score": val_res.at[highest_conf_index,"Score"],
             }, ignore_index=True)
