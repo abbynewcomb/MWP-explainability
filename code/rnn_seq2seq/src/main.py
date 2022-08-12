@@ -558,11 +558,11 @@ def main():
                     config, model, test_dataloader, voc1, voc2, device, logger, 0
                 )
                 logger.info("Accuracy: {}".format(test_acc_epoch))
+
+                
             if config.mode == "input_reduction":
                 sz = len(pd.read_csv(os.path.join(data_path, dataset, "dev.csv")))
-                print("size of csv: {}", sz)
                 for i in range(sz):
-                    config.input_red_idx = i # change so load data func takes int
                     test_dataloader = load_data(config, logger, i)
                     
                     res = input_reduction(
@@ -574,7 +574,7 @@ def main():
                         str(i) +
                         ".csv"
                     )
-                    print("completed idx {}", i)
+                    print("completed idx {} of {}".format(i, sz))
             else:
                 estimate_confidence(config, model, test_dataloader, logger)
 

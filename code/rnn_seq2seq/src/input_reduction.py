@@ -93,8 +93,7 @@ def input_reduction(config, model, dataloader, voc1, voc2, device, logger, epoch
                 config, model, dataloader, voc1, voc2, device, logger, epoch_num
 
             )
-            if len(gradual_reduced_input_list) == 1:
-                print(val_res[["Question","Model Confidence"]])
+            
             # grab question with highest conf score, save to gradual_reduced_input_list
             val_res["Model Confidence"] = pd.to_numeric(val_res["Model Confidence"])
             highest_conf_index = val_res["Model Confidence"].idxmax()
