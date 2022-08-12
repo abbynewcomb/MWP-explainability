@@ -1,6 +1,7 @@
 import os
 import logging
 import random
+import pandas as pd
 import numpy as np
 from attrdict import AttrDict
 import torch
@@ -35,7 +36,7 @@ data_path = "../../data/"
 board_path = "./runs/"
 
 
-def load_data(config, logger):
+def load_data(config, logger, input_red_idx=None):
     """
         Loads the data from the datapath in torch dataset form
 
@@ -99,7 +100,7 @@ def load_data(config, logger):
                 max_length=config.max_length,
                 is_debug=config.debug,
                 mode=config.mode,
-                input_red_idx = config.input_red_idx,
+                input_red_idx = input_red_idx,
             )
         else:
             test_set = TextDataset(
@@ -128,7 +129,6 @@ def main():
     args = parser.parse_args()
     config = args
     mode = config.mode
-    input_red_idx = config.input_red_idx
     if mode == "train":
         is_train = True
     else:
@@ -426,7 +426,8 @@ def main():
             logger.info("Vocab saved at {}".format(vocab1_path))
 
         else: ## not training
-            test_dataloader = load_data(config, logger)
+            if not config.mode == "input_reduction": #input reduction loads data later
+                test_dataloader = load_data(config, logger)
             logger.info("Loading Vocab File...")
 
             with open(vocab1_path, "rb") as f:
@@ -526,7 +527,7 @@ def main():
                 voc2=voc2,
                 device=device,
                 logger=logger,
-                num_iters=len(test_dataloader),
+                num_iters = 100,
             )
 
             (
@@ -558,15 +559,22 @@ def main():
                 )
                 logger.info("Accuracy: {}".format(test_acc_epoch))
             if config.mode == "input_reduction":
-                res = input_reduction(
-                    config, model, test_dataloader, voc1, voc2, device, logger, 0,
-                )
-                res.to_csv(
-                    config.outputs_path +
-                    "/input_reduction" +
-                    str(input_red_idx) +
-                    ".csv"
-                )
+                sz = len(pd.read_csv(os.path.join(data_path, dataset, "dev.csv")))
+                print("size of csv: {}", sz)
+                for i in range(sz):
+                    config.input_red_idx = i # change so load data func takes int
+                    test_dataloader = load_data(config, logger, i)
+                    
+                    res = input_reduction(
+                        config, model, test_dataloader, voc1, voc2, device, logger, 0,
+                    )
+                    res.to_csv(
+                        config.outputs_path +
+                        "/input_reduction" +
+                        str(i) +
+                        ".csv"
+                    )
+                    print("completed idx {}", i)
             else:
                 estimate_confidence(config, model, test_dataloader, logger)
 
